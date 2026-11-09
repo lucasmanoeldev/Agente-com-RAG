@@ -1,74 +1,49 @@
-Agente com RAG
-===============
+# Agente com RAG
 
-Projeto de agente com Recuperação Aumentada por Geração (RAG) usando Agno, Groq e ChromaDB. O agente lê o PDF `smc.pdf`, indexa o conteúdo e expõe uma API (via FastAPI/Uvicorn). Uma interface em Streamlit consome a API para chat.
+Agente de consulta ao PDF `data/smc.pdf` com Agno, Groq e ChromaDB. Uma API baseada no AgentOS atende a interface de chat em Streamlit.
 
-Sumário
-------
-- Visão Geral
-- Requisitos
-- Instalação
-- Configuração (.env)
-- Executando a API
-- Executando a Interface (Streamlit)
-- Estrutura do Projeto
+## Estrutura
 
-Visão Geral
------------
-- Vetoriza e consulta o PDF `smc.pdf` via `ChromaDb` em `tmp/chromadb`.
-- Serve a API em `http://localhost:7777` (conforme utilizado pela interface Streamlit).
-- Usa o modelo Groq `openai/gpt-oss-120b` (configure a chave `GROQ_KEY_API`).
+| Caminho | Responsabilidade |
+|---|---|
+| `backend/api_agent.py` | Agente, base de conhecimento e API |
+| `frontend/app.py` | Chat Streamlit |
+| `data/smc.pdf` | Documento usado como fonte |
+| `api_agent.py` | Entrada compatível da API |
+| `servido_tela.py` | Entrada compatível do Streamlit |
+| `tmp/` | ChromaDB e SQLite gerados localmente |
+| `pyproject.toml` / `uv.lock` | Dependências |
 
-Requisitos
-----------
-- Python >= 3.13
-- Git
-- (Opcional) Virtualenv/Uv ou sua ferramenta de ambiente preferida
+## Configuração
 
-Instalação
-----------
-1. Clone ou baixe o repositório localmente.
-2. (Opcional) Crie e ative um ambiente virtual.
-3. Instale as dependências definidas em `pyproject.toml`.
+Requer Python 3.13+ conforme `pyproject.toml`.
 
-Configuração (.env)
--------------------
-Crie um arquivo `.env` na raiz do projeto com:
-
-```
-GROQ_KEY_API=SEU_TOKEN_DA_GROQ
+```bash
+git clone https://github.com/lucasmanoeldev/Agente-com-RAG.git
+cd Agente-com-RAG
+uv sync
 ```
 
-Executando a API
-----------------
-Você pode iniciar a API simplesmente executando:
+Copie `.env.example` para `.env` e preencha `GROQ_KEY_API`. A variável mantém o nome já usado pelo projeto. `RAG_API_URL` define a API consumida pela interface; o padrão local é `http://localhost:10000`.
 
-```
-python api_agent.py
-```
+## Execução
 
-No primeiro start, o PDF `smc.pdf` será lido e indexado (se ainda não existir índice em `tmp/chromadb`). A API será servida por Uvicorn através do Agno AgentOS.
+Na raiz, inicie a API:
 
-Executando a Interface (Streamlit)
-----------------------------------
-Em outro terminal, rode a interface de chat:
-
-```
-streamlit run servido_tela.py
+```bash
+uv run python api_agent.py
 ```
 
-A interface irá se conectar ao endpoint configurado em `servido_tela.py` (por padrão `http://localhost:7777/agents/Agents_de_SMC/runs`).
+Em outro terminal, inicie a interface:
 
-Estrutura do Projeto
---------------------
-- `api_agent.py`: inicializa Agente, Knowledge/Chroma e serve a API.
-- `servido_tela.py`: interface Streamlit para chat com o agente.
-- `smc.pdf`: fonte de conhecimento a ser indexada.
-- `tmp/`: dados persistentes (Chroma e SQLite do Agno).
-- `pyproject.toml`: dependências e metadados do projeto.
+```bash
+uv run streamlit run servido_tela.py
+```
 
-Licença
--------
-Projeto público. Ajuste a licença conforme necessário.
+O script da API indexa o documento antes de iniciar o servidor na porta 10000. O primeiro processamento pode baixar modelos e utilizar a API externa. Os dados locais continuam em `tmp/`.
 
+Para consumir uma API hospedada, configure `RAG_API_URL` com a URL correspondente. Iniciar apenas o objeto ASGI não executa a indexação feita pelo bloco principal do script.
 
+## Limites
+
+As respostas dependem do documento, da recuperação e do modelo. O projeto é um exemplo de RAG; a execução completa requer credencial e serviços externos. Não há suíte de testes automatizados no repositório.
